@@ -68,7 +68,7 @@ class HandGestureVolumeController:
         
         # Draw volume bar
         cv2.rectangle(img, (50, 150), (85, 400), (0, 255, 0), 3)
-        vol_bar = np.interp(length, [30, 200], [400, 150])
+        vol_bar = np.interp(length, [30, 300], [400, 150])
         cv2.rectangle(img, (50, int(vol_bar)), (85, 400), (0, 255, 0), cv2.FILLED)
         
         # Draw volume percentage
@@ -143,8 +143,8 @@ class HandGestureVolumeController:
                         # Calculate distance between thumb and index finger
                         length = self.get_distance(thumb_tip, index_tip)
                         
-                        # Convert distance to volume (30-200 pixels -> 0-100%)
-                        vol_percentage = np.interp(length, [30, 200], [0, 100])
+                        # Convert distance to volume (30-300 pixels -> 0-100%)
+                        vol_percentage = np.interp(length, [30, 300], [0, 100])
                         
                         # Only update volume if change is significant (reduces system calls and shows indicator better)
                         if abs(vol_percentage - self.last_vol_percentage) > 2:
