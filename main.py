@@ -23,6 +23,7 @@ class HandGestureVolumeController:
         self.vol = 0
         self.vol_bar = 400
         self.vol_percentage = 0
+        self.last_vol_percentage = 0  # Track last volume to avoid unnecessary updates
         
         # Get system platform
         self.system = platform.system()
@@ -32,11 +33,19 @@ class HandGestureVolumeController:
         return math.hypot(p2[0] - p1[0], p2[1] - p1[1])
     
     def set_volume(self, volume):
-        """Set system volume based on platform"""
+        """Set system volume based on platform and show native volume indicator"""
         volume = max(0, min(100, volume))  # Clamp between 0-100
         
         if self.system == "Darwin":  # macOS
-            subprocess.run(['osascript', '-e', f'set volume output volume {volume}'])
+            # Set volume using osascript - this will show the native macOS volume indicator
+            try:
+                # Using AppleScript to set volume and trigger the indicator
+                script = f'''
+                set volume output volume {volume}
+                '''
+                subprocess.run(['osascript', '-e', script], capture_output=True)
+            except Exception as e:
+                print(f"Error setting volume on macOS: {e}")
         elif self.system == "Windows":
             # For Windows, using pycaw library
             try:
@@ -137,8 +146,10 @@ class HandGestureVolumeController:
                         # Convert distance to volume (30-200 pixels -> 0-100%)
                         vol_percentage = np.interp(length, [30, 200], [0, 100])
                         
-                        # Set system volume
-                        self.set_volume(vol_percentage)
+                        # Only update volume if change is significant (reduces system calls and shows indicator better)
+                        if abs(vol_percentage - self.last_vol_percentage) > 2:
+                            self.set_volume(vol_percentage)
+                            self.last_vol_percentage = vol_percentage
                         
                         # Visual feedback when fingers are very close
                         if length < 40:
